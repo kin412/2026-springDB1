@@ -1,6 +1,5 @@
 package hello.jdbc.repository;
 
-import hello.jdbc.connection.DBConnectionUtil;
 import hello.jdbc.domain.Member;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.support.JdbcUtils;
@@ -10,14 +9,14 @@ import java.sql.*;
 import java.util.NoSuchElementException;
 
 /*
-JDBC - DataSource 사용, JdbcUtils 사용
+JDBC - ConnectionParam
  */
 @Slf4j
-public class MemberREpositoryV1 {
+public class MemberRepositoryV2 {
 
     private final DataSource dataSource;
 
-    public MemberREpositoryV1(DataSource dataSource) {
+    public MemberRepositoryV2(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -74,6 +73,42 @@ public class MemberREpositoryV1 {
 
     }
 
+    //기존 커넥션 을 파라미터로 받아서 연결.
+    public Member findById(Connection con, String memberId) throws SQLException {
+        String sql = "select * from member where member_id = ?";
+
+        //Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            //con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, memberId);
+
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                Member member = new Member();
+                member.setMemberId(rs.getString("member_id"));
+                member.setMoney(rs.getInt("money"));
+                return member;
+            } else{
+                throw new NoSuchElementException("member not found memberId=" + memberId);
+            }
+
+        }catch (SQLException e) {
+            log.error("db error", e);
+            throw e;
+        }finally {
+            //close(con, pstmt, rs);
+            //커넥션은 여기서 닫지 않는다.
+            JdbcUtils.closeResultSet(rs);
+            JdbcUtils.closeStatement(pstmt);
+            //JdbcUtils.closeConnection(con);
+        }
+
+    }
+
     public void update(String memberId, int money) throws SQLException {
         String sql = "update member set money = ? where member_id = ?";
 
@@ -93,6 +128,32 @@ public class MemberREpositoryV1 {
             throw e;
         } finally {
             close(con, pstmt, null); //try에서 에러가 나도 반드시 종료해줘야하기때문에 finally
+        }
+
+    }
+
+    public void update(Connection con, String memberId, int money) throws SQLException {
+        String sql = "update member set money = ? where member_id = ?";
+
+        //Connection con = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            //con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setInt(1, money);
+            pstmt.setString(2, memberId);
+            int resultSize = pstmt.executeUpdate(); // 영향받은 row 수많큼 int 타입 반환
+            log.info("resultSize={}", resultSize);
+
+        } catch (SQLException e) {
+            log.error("db error", e);
+            throw e;
+        } finally {
+            //close(con, pstmt, null); //try에서 에러가 나도 반드시 종료해줘야하기때문에 finally
+            //커넥션은 여기서 닫지 않는다.
+            JdbcUtils.closeStatement(pstmt);
+            //JdbcUtils.closeConnection(con);
         }
 
     }
@@ -124,30 +185,6 @@ public class MemberREpositoryV1 {
         JdbcUtils.closeResultSet(rs);
         JdbcUtils.closeStatement(stmt);
         JdbcUtils.closeConnection(con);
-
-        /*if(rs != null) {
-            try {
-                rs.close();
-            } catch (SQLException e) {
-                log.info("rs close error", e);
-            }
-        }
-
-        if(stmt != null) {
-            try {
-                stmt.close();
-            } catch (SQLException e) {
-                log.info("stmt close error", e);
-            }
-        }
-
-        if(con != null) {
-            try {
-                con.close();
-            } catch (SQLException e) {
-                log.info("con close error", e);
-            }
-        }*/
 
     }
 

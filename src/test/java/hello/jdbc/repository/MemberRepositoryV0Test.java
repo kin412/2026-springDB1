@@ -1,39 +1,19 @@
 package hello.jdbc.repository;
 
-import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.hikari.util.DriverDataSource;
-import hello.jdbc.connection.ConnectionConst;
 import hello.jdbc.domain.Member;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
 
-import static hello.jdbc.connection.ConnectionConst.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Slf4j
-class MemberREpositoryV1Test {
+class MemberRepositoryV0Test {
 
-    MemberREpositoryV1 repository ;
-
-    @BeforeEach
-    void beforeEach() {
-        //기본 DriverManager - 항상 새로운 커넥션을 획득
-        //DriverManagerDataSource dataSource = new DriverManagerDataSource(URL,USERNAME,PASSWORD);
-
-        //커넥션 풀링
-        HikariDataSource dataSource = new HikariDataSource();
-        dataSource.setJdbcUrl(URL);
-        dataSource.setUsername(USERNAME);
-        dataSource.setPassword(PASSWORD);
-
-        repository = new MemberREpositoryV1(dataSource);
-    }
+    MemberRepositoryV0 repository = new MemberRepositoryV0();
 
     @Test
     void crud() throws SQLException {
